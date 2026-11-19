@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SubMais - Aguarde</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  body { background: linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%); }
+  .glass { background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+</style>
+</head>
+<body class="text-white min-h-screen flex items-center justify-center p-4">
+  <div class="glass rounded-2xl p-8 max-w-md w-full text-center">
+    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-2xl mx-auto mb-4">S</div>
+    <h1 class="text-xl font-bold mb-1">SubMais</h1>
+    <p id="titleEl" class="text-gray-300 text-sm mb-6 truncate"></p>
+
+    <div id="loading" class="py-8">
+      <div class="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"></div>
+      <p class="text-gray-400 mt-3 text-sm">Carregando link...</p>
+    </div>
+
+    <div id="stageBox" class="hidden">
+      <p id="stageLabel" class="text-sm text-gray-400 mb-2"></p>
+      <div class="text-5xl font-bold mb-4" id="countdown">10</div>
+      <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+        <div id="progressBar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000" style="width:0%"></div>
+      </div>
+      <p class="text-xs text-gray-500 mt-4">Aguarde para ser redirecionado ao destino.</p>
+    </div>
+
+    <div id="errorBox" class="hidden py-6">
+      <p id="errorMsg" class="text-red-400"></p>
+      <a href="index.html" class="inline-block mt-4 text-indigo-300 underline">Voltar</a>
+    </div>
+
+    <div id="doneBox" class="hidden py-6">
+      <p class="text-green-400">Redirecionando...</p>
+    </div>
+  </div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "COLE_SUA_API_KEY",
+  authDomain: "nooxsub.firebaseapp.com",
+  databaseURL: "https://nooxsub-default-rtdb.firebaseio.com",
+  projectId: "nooxsub",
+  storageBucket: "nooxsub.appspot.com",
+  messagingSenderId: "COLE_SEU_SENDER_ID",
+  appId: "COLE_SEU_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const STAGES = 3;
+const STAGE_SECONDS = 10;
+
+const params = new URLSearchParams(location.search);
+const linkId = params.get('id');
+
+const loading = document.getElementById('loading');
+const stageBox = document.getElementById('stageBox');
+const errorBox = document.getElementById('errorBox');
+const doneBox = document.getElementById('doneBox');
+const countdownEl = document.getElementById('countdown');
+const progressBar = document.getElementById('progressBar');
+const stageLabel = document.getElementById('stageLabel');
+const titleEl = document.getElementById('titleEl');
+
+if (!linkId) {
+  showError('Link inválido.');
+} else {
+  loadLink(linkId);
+}
+
+async function loadLink(id) {
+  try {
+    const snap = await db.ref('links/' + id).get();
+    if (!snap.exists()) { showError('Link não encontrado.'); return; }
+    const data = snap.val();
+    titleEl.textContent = data.title || data.url;
+    loading.classList.add('hidden');
+    stageBox.classList.remove('hidden');
+    runStage(0, data, id);
+  } catch (e) {
+    showError('Erro ao carregar: ' + e.message);
+  }
+}
+
+function showError(msg) {
+  loading.classList.add('hidden');
+  stageBox.classList.add('hidden');
+  errorBox.classList.remove('hidden');
+  document.getElementById('errorMsg').textContent = msg;
+}
+
+function runStage(stageIndex, data, id) {
+  stageLabel.textContent = `Etapa ${stageIndex + 1} de ${STAGES}`;
+  let remaining = STAGE_SECONDS;
+  countdownEl.textContent = remaining;
+  progressBar.style.width = '0%';
+  const total = STAGE_SECONDS;
+  const timer = setInterval(() => {
+    remaining--;
+    countdownEl.textContent = remaining;
+    progressBar.style.width = ((total - remaining) / total * 100) + '%';
+    if (remaining <= 0) {
+      clearInterval(timer);
+      progressBar.style.width = '100%';
+      if (stageIndex + 1 < STAGES) {
+        setTimeout(() => runStage(stageIndex + 1, data, id), 400);
+      } else {
+        finish(data, id);
+      }
+    }
+  }, 1000);
+}
+
+async function finish(data, id) {
+  stageBox.classList.add('hidden');
+  doneBox.classList.remove('hidden');
+  try {
+    await db.ref('links/' + id + '/clicks').transaction(c => (c || 0) + 1);
+    if (data.ownerUid) {
+      await db.ref('users/' + data.ownerUid + '/totalClicks').transaction(c => (c || 0) + 1);
+    }
+  } catch (e) { console.error(e); }
+  let target = data.url;
+  try {
+    const u = new URL(target);
+    if (!/^https?:$/.test(u.protocol)) throw new Error('invalid');
+  } catch {
+    showError('URL de destino inválida.');
+    return;
+  }
+  setTimeout(() => { window.location.href = target; }, 800);
+}
+</script>
+</body>
+</html>
