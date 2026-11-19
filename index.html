@@ -115,7 +115,7 @@
           <h3 class="font-bold text-xl neon-text">Plataformas</h3>
           <span class="text-xs text-gray-400">Clique para preencher o formulário</span>
         </div>
-        <div id="platformsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+        <div id="platformsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
       </div>
 
       <div class="glass rounded-2xl p-6 mt-8">
@@ -154,36 +154,22 @@ let linksUnsub = null;
 let usersUnsub = null;
 
 const PLATFORMS = [
-  { id:'netflix', name:'Netflix', icon:'🎬', color:'#e50914', action:'Assistir', group:'streaming' },
-  { id:'prime', name:'Prime Video', icon:'📺', color:'#00a8e1', action:'Assistir', group:'streaming' },
-  { id:'disney', name:'Disney+', icon:'✨', color:'#113ccf', action:'Assistir', group:'streaming' },
-  { id:'hbomax', name:'HBO Max', icon:'🎞️', color:'#7b2cbf', action:'Assistir', group:'streaming' },
-  { id:'spotify', name:'Spotify', icon:'🎵', color:'#1db954', action:'Ouvir', group:'streaming' },
-  { id:'youtube', name:'YouTube', icon:'▶️', color:'#ff0000', action:'Assistir', group:'streaming' },
-  { id:'twitch', name:'Twitch', icon:'🎮', color:'#9146ff', action:'Assistir live', group:'streaming' },
-  { id:'crunchy', name:'Crunchyroll', icon:'🍜', color:'#f47521', action:'Assistir', group:'streaming' },
-  { id:'instagram', name:'Instagram', icon:'📸', color:'#e1306c', action:'Seguir', group:'social' },
-  { id:'whatsapp', name:'WhatsApp', icon:'💬', color:'#25d366', action:'Entrar no grupo', group:'social' },
-  { id:'telegram', name:'Telegram', icon:'✈️', color:'#0088cc', action:'Entrar no grupo', group:'social' },
-  { id:'discord', name:'Discord', icon:'🎧', color:'#5865f2', action:'Entrar no servidor', group:'social' },
-  { id:'tiktok', name:'TikTok', icon:'🎶', color:'#00f2ea', action:'Seguir', group:'social' },
-  { id:'twitter', name:'X / Twitter', icon:'🐦', color:'#1da1f2', action:'Seguir', group:'social' },
-  { id:'facebook', name:'Facebook', icon:'👍', color:'#1877f2', action:'Seguir', group:'social' },
-  { id:'threads', name:'Threads', icon:'🧵', color:'#ffffff', action:'Seguir', group:'social' },
+  { id:'youtube', name:'YouTube', icon:'https://cdn.simpleicons.org/youtube/ff0000', color:'#ff0000', action:'Inscrever-se', group:'streaming' },
+  { id:'discord', name:'Discord', icon:'https://cdn.simpleicons.org/discord/5865F2', color:'#5865F2', action:'Entrar no servidor', group:'social' },
+  { id:'telegram', name:'Telegram', icon:'https://cdn.simpleicons.org/telegram/26A5E4', color:'#26A5E4', action:'Entrar no grupo', group:'social' },
+  { id:'whatsapp', name:'WhatsApp', icon:'https://cdn.simpleicons.org/whatsapp/25D366', color:'#25D366', action:'Entrar no grupo', group:'social' },
+  { id:'instagram', name:'Instagram', icon:'https://cdn.simpleicons.org/instagram/E4405F', color:'#E4405F', action:'Seguir', group:'social' },
 ];
 
 function platformFromUrl(url) {
   try {
     const h = new URL(url).hostname.toLowerCase();
     const map = [
-      ['netflix.com','netflix'], ['primevideo.com','prime'], ['disneyplus.com','disney'],
-      ['hbomax.com','hbomax'], ['max.com','hbomax'], ['spotify.com','spotify'],
-      ['youtube.com','youtube'], ['youtu.be','youtube'], ['twitch.tv','twitch'],
-      ['crunchyroll.com','crunchy'], ['instagram.com','instagram'], ['whatsapp.com','whatsapp'],
-      ['wa.me','whatsapp'], ['t.me','telegram'], ['telegram.org','telegram'],
-      ['discord.com','discord'], ['discord.gg','discord'], ['tiktok.com','tiktok'],
-      ['twitter.com','twitter'], ['x.com','twitter'], ['facebook.com','facebook'],
-      ['threads.net','threads'],
+      ['youtube.com','youtube'], ['youtu.be','youtube'],
+      ['discord.com','discord'], ['discord.gg','discord'],
+      ['t.me','telegram'], ['telegram.org','telegram'],
+      ['whatsapp.com','whatsapp'], ['wa.me','whatsapp'],
+      ['instagram.com','instagram'],
     ];
     for (const [d, id] of map) if (h.includes(d)) return PLATFORMS.find(p=>p.id===id);
   } catch {}
@@ -386,7 +372,7 @@ function renderPlatforms() {
     card.className = 'plat-card glass rounded-xl p-4 text-left neon-border-cyan';
     card.style.borderColor = p.color + '55';
     card.innerHTML = `
-      <div class="text-3xl mb-2">${p.icon}</div>
+      <img src="${p.icon}" alt="${p.name}" class="w-10 h-10 mb-2" onerror="this.style.display='none'" />
       <p class="font-semibold text-sm truncate">${p.name}</p>
       <p class="text-xs text-gray-400 mt-1">${p.action}</p>
     `;
@@ -402,12 +388,12 @@ function renderPlatforms() {
 function renderQuickPlatforms() {
   const box = document.getElementById('platQuick');
   box.innerHTML = '';
-  ['instagram','whatsapp','telegram','discord'].forEach(id => {
+  ['youtube','discord','telegram','whatsapp','instagram'].forEach(id => {
     const p = PLATFORMS.find(x=>x.id===id);
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'chip px-3 py-1.5 rounded-full text-xs font-semibold';
-    b.innerHTML = `${p.icon} ${p.name}`;
+    b.className = 'chip px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1';
+    b.innerHTML = `<img src="${p.icon}" alt="${p.name}" class="w-4 h-4" onerror="this.style.display='none'" /> ${p.name}`;
     b.addEventListener('click', () => {
       document.getElementById('titleInput').value = `${p.name} - ${p.action}`;
       document.getElementById('urlInput').focus();
@@ -431,12 +417,13 @@ function loadLinks(uid) {
     items.forEach(d => {
       const genUrl = buildPageUrl(d.id);
       const plat = platformFromUrl(d.url);
-      const icon = plat ? plat.icon : '🔗';
       const el = document.createElement('div');
       el.className = 'glass rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 neon-card';
       el.innerHTML = `
         <div class="flex items-center gap-3 flex-1 min-w-0">
-          <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style="background:${plat?plat.color+'22':'rgba(255,255,255,0.06)'};border:1px solid ${plat?plat.color+'55':'rgba(255,255,255,0.1)'}">${icon}</div>
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:${plat?plat.color+'22':'rgba(255,255,255,0.06)'};border:1px solid ${plat?plat.color+'55':'rgba(255,255,255,0.1)'}">
+            ${plat ? `<img src="${plat.icon}" alt="${plat.name}" class="w-6 h-6" onerror="this.style.display='none'" />` : '🔗'}
+          </div>
           <div class="flex-1 min-w-0">
             <p class="font-semibold truncate">${escapeHtml(d.title || d.url)}</p>
             <p class="text-xs text-gray-400 truncate">${escapeHtml(d.url)}</p>
